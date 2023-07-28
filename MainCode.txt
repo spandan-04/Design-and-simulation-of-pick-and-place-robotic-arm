@@ -1,0 +1,323 @@
+import adsk.core, adsk.fusion, adsk.cam, traceback
+
+l0 = 15 #Position of Hole 1 and 2 from the base
+
+l2 = 30 #Length of Arm 1 obtained from Program
+l3 = 20 #Length of Arm 2 obtained from Program
+
+length1 = 1
+length2 = 1
+length3 = 1
+length4 = 1
+length5 = 1
+length6 = 1
+length7 = 1
+length8 = 1
+length9 = 1
+length10= 1
+
+radius1 = 1
+radius2 = 1
+radius3 = 1
+radius4 = 1
+radius5 = 1
+radius6 = 1
+radius7 = 1
+radius8 = 1
+radius9 = 1
+radius10 = 1
+
+#BASE
+length1 = 3.0 # cm
+radius1 = 5.0 # cm
+centerX1 = 0.0 # cm
+centerY1 = 0.0 # cm
+centerZ1 = 0.0 # cm
+
+#Stand
+length2 = 15.0 # cm
+radius2 = 3.0 # cm
+centerX2 = 0.0 # cm
+centerY2 = 0.0 # cm
+centerZ2 = length1 # cm
+
+#Arm1
+radius3 = 3.0 # cm
+length3 = l2 + 2*radius4 + 2*radius5 + 2 # cm
+centerX3 = radius2 + radius3 + 0.2 # Tolerance # cm
+centerY3 = -(length1 + length2 - radius3) # cm
+centerZ3 = -radius3 # cm
+
+#Arm2
+length6 = l3 + 2*(radius5) # cm
+radius6 = 3.0 # cm
+if radius6>radius2:
+    centerX6 = -((radius2 - radius6)+0.2) #Tolerance # cm
+else:
+    centerX6 = -((radius6 - radius2)+0.2) #Tolerance # cm
+
+centerY6 = -(length1+length2-radius3) # cm
+centerZ6 = (l2-2*(radius5)) # cm
+
+#Hole for Base and Arm 1
+# Define radius4 to be 50% of the shorter radius of radius3 and radius2.
+radius4 = (radius3) * 0.5
+centerZ4 = -(radius2)
+centerX4 = -(length2+length1-radius3)
+centerY4 = 0.0
+
+#Hole for Arm 1 and Arm 2
+# Define radius4 to be 50% of the shorter radius of radius4 and radius6.
+radius5 = min(radius3, radius6) * 0.5
+centerZ5 = -(radius2 + 2*(radius3) + 0.2)
+centerX5 = -(length2+length1-radius3)
+centerY5 = l2
+
+#Shorter Side End of Screw 1
+length8 = 1.0 # cm
+radius8 = radius5 * 1.2 # cm
+centerX8 = -(length1+length2-radius3) # cm
+centerY8 = 0.0 # cm
+centerZ8 = -((1.5+radius2))# cm
+
+#Connecting Rod 1
+length9 = 1.2*(2*(radius2+radius3)) # cm
+radius9 = (radius5*0.90) # cm
+centerX9 = -(length1+length2-radius3) # cm
+centerY9 = 0.0 # cm
+centerZ9 = -((0.5+radius2))# cm
+
+#Longer Side End of Screw 1
+length7 = 1 # cm
+radius7 = radius5 * 1.2 # cm
+centerX7 = -(length1+length2-radius3) # cm
+centerY7 = 0.0 # cm
+centerZ7 = (centerZ9+length9-1)# cm
+
+#Short End Screw 2
+length11 = 1.0 # cm
+radius11 = radius5 * 1.2 # cm
+centerX11 = -(length1+length2-radius3) # cm
+centerY11 = l2 # cm
+centerZ11 = ((1 + radius2 + radius3*2))# cm
+
+#Connecting Rod 2
+length12 = 1.2*(2*(radius6+radius3)) # cm
+radius12 = (radius5*0.9) # cm
+centerX12 = -(length1+length2-radius3) # cm
+centerY12 = l2 # cm
+centerZ12 = (1+radius2 + radius3*2)# cm
+
+#Long End Screw 2
+length10 = 1.0 # cm
+radius10 = radius5 * 1.2 # cm
+centerX10 = -(length1+length2-radius3) # cm
+centerY10 = l2 # cm
+centerZ10 = (centerZ12-length12)# cm
+
+
+def run(context):
+    ui = None
+    try:
+        app = adsk.core.Application.get()
+        ui  = app.userInterface
+
+        # Create a new document.
+        doc = app.documents.add(adsk.core.DocumentTypes.FusionDesignDocumentType)
+        
+        # Get the root component of the active design.
+        product = app.activeProduct
+        design = adsk.fusion.Design.cast(product)
+        rootComp = design.rootComponent
+        
+        # Get the extrude features.
+        extrudes = rootComp.features.extrudeFeatures  
+        
+# Creating the Base Sketch
+        sketches = rootComp.sketches
+        sketch1 = sketches.add(rootComp.xYConstructionPlane)
+        sketchCircles = sketch1.sketchCurves.sketchCircles
+        centerPoint1 = adsk.core.Point3D.create(centerX1, centerY1, centerZ1)
+        sketchCircles.addByCenterRadius(centerPoint1, radius1)
+
+        # Get the profile defined by the first circle.
+        prof_simple = sketch1.profiles.item(0)
+        
+        # Extrude the profile to a distance of length1 cm.
+        distance = adsk.core.ValueInput.createByReal(length1) 
+        extrude_simple = extrudes.addSimple(prof_simple, distance, adsk.fusion.FeatureOperations.NewBodyFeatureOperation) 
+        body_simple = extrude_simple.bodies.item(0) 
+        body_simple.name = "Base"
+
+# Creating the Stand
+        sketch2 = sketches.add(rootComp.xYConstructionPlane)
+        sketchCircles2 = sketch2.sketchCurves.sketchCircles
+        centerPoint2 = adsk.core.Point3D.create(centerX2, centerY2, centerZ2)
+        sketchCircles2.addByCenterRadius(centerPoint2, radius2)
+
+        # Get the profile defined by the second circle.
+        prof_second = sketch2.profiles.item(0)
+        
+        # Extrude the profile to a distance of length2 cm.
+        distance = adsk.core.ValueInput.createByReal(length2)
+        extrude_second = extrudes.addSimple(prof_second, distance, adsk.fusion.FeatureOperations.JoinFeatureOperation)
+        body_second = extrude_second.bodies.item(0)
+        body_second.name = "Stand"
+
+# Creating the First Arm
+        sketch3 = sketches.add(rootComp.xZConstructionPlane)
+        sketchCircles3 = sketch3.sketchCurves.sketchCircles
+        centerPoint3 = adsk.core.Point3D.create(centerX3, centerY3, centerZ3)
+        sketchCircles3.addByCenterRadius(centerPoint3, radius3)
+
+        # Get the profile defined by the third circle.
+        prof_third = sketch3.profiles.item(0)
+        
+        # Extrude the profile to a distance of length3 cm.
+        distance = adsk.core.ValueInput.createByReal(length3)
+        extrude_third = extrudes.addSimple(prof_third, distance, adsk.fusion.FeatureOperations.JoinFeatureOperation)
+        body_third = extrude_third.bodies.item(0)
+        body_third.name = "Arm 1"
+
+# Create the First Hole
+        sketch4 = sketches.add(rootComp.yZConstructionPlane)
+        sketchCircles4 = sketch4.sketchCurves.sketchCircles
+        centerPoint4 = adsk.core.Point3D.create(centerX4, centerY4, centerZ4)
+        sketchCircles4.addByCenterRadius(centerPoint4, radius4)
+
+        # Get the profile defined by the fourth circle.
+        prof_fourth = sketch4.profiles.item(0)
+
+        # Extrude the profile to a distance of 1.2*(2*(radius2+radius3)) cm.
+        distance = adsk.core.ValueInput.createByReal(1.2*(2*(radius2+radius3)))
+        extInput = extrudes.createInput(prof_fourth, adsk.fusion.FeatureOperations.CutFeatureOperation)
+        extInput.setDistanceExtent(False, distance)
+        extrude_fourth = extrudes.add(extInput)
+        body_fourth = extrude_fourth.bodies.item(0)
+        body_fourth.name = "Hole 1"
+
+# Create the Second Arm
+        sketch6 = sketches.add(rootComp.xZConstructionPlane)
+        sketchCircles6 = sketch6.sketchCurves.sketchCircles
+        centerPoint6 = adsk.core.Point3D.create(centerX6, centerY6, centerZ6)
+        sketchCircles6.addByCenterRadius(centerPoint6, radius6)
+
+        # Get the profile defined by the sixth circle.
+        prof_sixth = sketch6.profiles.item(0)
+        
+        # Extrude the profile to a distance of length6 cm.
+        distance = adsk.core.ValueInput.createByReal(length6)
+        extrude_sixth = extrudes.addSimple(prof_sixth, distance, adsk.fusion.FeatureOperations.JoinFeatureOperation)
+        body_sixth = extrude_sixth.bodies.item(0)
+        body_sixth.name = "Arm 2"
+
+# Create the Second Hole
+        sketch5 = sketches.add(rootComp.yZConstructionPlane)
+        sketchCircles5 = sketch5.sketchCurves.sketchCircles
+        centerPoint5 = adsk.core.Point3D.create(centerX5, centerY5, centerZ5)
+        sketchCircles5.addByCenterRadius(centerPoint5, radius4)
+
+        # Get the profile defined by the fourth circle.
+        prof_fifth = sketch5.profiles.item(0)
+
+        # Extrude the profile to a distance of 5*(radius2+radius3) cm.
+        distance = adsk.core.ValueInput.createByReal(5*(radius2+radius3))
+        extInput = extrudes.createInput(prof_fifth, adsk.fusion.FeatureOperations.CutFeatureOperation)
+        extInput.setDistanceExtent(False, distance)
+        extrude_fifth = extrudes.add(extInput)
+        body_ffifth = extrude_fifth.bodies.item(0)
+        body_ffifth.name = "Hole 2"
+
+# Create the Short End of Screw 1
+        sketch8 = sketches.add(rootComp.yZConstructionPlane)
+        sketchCircles8 = sketch8.sketchCurves.sketchCircles
+        centerPoint8 = adsk.core.Point3D.create(centerX8, centerY8, centerZ8)
+        sketchCircles8.addByCenterRadius(centerPoint8, radius8)
+
+        # Get the profile defined by the fourth circle.
+        prof_seventh = sketch8.profiles.item(0)
+
+        # Extrude the profile to a distance of length8 cm.
+        distance = adsk.core.ValueInput.createByReal(length8)
+        extrude_eighth = extrudes.addSimple(prof_seventh, distance, adsk.fusion.FeatureOperations.JoinFeatureOperation)
+        body_eighth = extrude_eighth.bodies.item(0)
+        body_eighth.name = "Short End Screw 1"
+
+# Create Connecting Rod 1
+        sketch9 = sketches.add(rootComp.yZConstructionPlane)
+        sketchCircles9 = sketch9.sketchCurves.sketchCircles
+        centerPoint9 = adsk.core.Point3D.create(centerX9, centerY9, centerZ9)
+        sketchCircles9.addByCenterRadius(centerPoint9, radius9)
+
+        # Get the profile defined by the fourth circle.
+        prof_seventh = sketch9.profiles.item(0)
+
+        # Extrude the profile to a distance of length9 cm.
+        distance = adsk.core.ValueInput.createByReal(length9)
+        extrude_ninth = extrudes.addSimple(prof_seventh, distance, adsk.fusion.FeatureOperations.JoinFeatureOperation)
+        body_ninth = extrude_ninth.bodies.item(0)
+        body_ninth.name = "Connecting Rod 1"
+
+# Create the Long End of Screw 1
+        sketch7 = sketches.add(rootComp.yZConstructionPlane)
+        sketchCircles7 = sketch7.sketchCurves.sketchCircles
+        centerPoint7 = adsk.core.Point3D.create(centerX7, centerY7, centerZ7)
+        sketchCircles7.addByCenterRadius(centerPoint7, radius7)
+
+        # Get the profile defined by the fourth circle.
+        prof_seventh = sketch7.profiles.item(0)
+
+        # Extrude the profile to a distance of length7 cm.
+        distance = adsk.core.ValueInput.createByReal(length7)
+        extrude_seventh = extrudes.addSimple(prof_seventh, distance, adsk.fusion.FeatureOperations.JoinFeatureOperation)
+        body_seventh = extrude_seventh.bodies.item(0)
+        body_seventh.name = "Long End Screw 1"
+
+# Create the Short End of Screw 2
+        sketch11 = sketches.add(rootComp.yZConstructionPlane)
+        sketchCircles11 = sketch11.sketchCurves.sketchCircles
+        centerPoint11 = adsk.core.Point3D.create(centerX11, centerY11, centerZ11)
+        sketchCircles11.addByCenterRadius(centerPoint11, radius11)
+
+        # Get the profile defined by the fourth circle.
+        prof_eleventh = sketch11.profiles.item(0)
+
+        # Extrude the profile to a distance of length8 cm.
+        distance = adsk.core.ValueInput.createByReal(length11)
+        extrude_eleventh = extrudes.addSimple(prof_eleventh, distance, adsk.fusion.FeatureOperations.JoinFeatureOperation)
+        body_eleventh = extrude_eleventh.bodies.item(0)
+        body_eleventh.name = "Short End Screw 2"
+
+# Create Connecting Rod 2
+        sketch12 = sketches.add(rootComp.yZConstructionPlane)
+        sketchCircles12 = sketch12.sketchCurves.sketchCircles
+        centerPoint12 = adsk.core.Point3D.create(centerX12, centerY12, centerZ12)
+        sketchCircles12.addByCenterRadius(centerPoint12, radius12)
+
+        # Get the profile defined by the fourth circle.
+        prof_twelfth = sketch12.profiles.item(0)
+
+        # Extrude the profile to a distance of length9 cm.
+        distance = adsk.core.ValueInput.createByReal(-length12)
+        extrude_twelfth = extrudes.addSimple(prof_twelfth, distance, adsk.fusion.FeatureOperations.JoinFeatureOperation)
+        body_twelfth = extrude_twelfth.bodies.item(0)
+        body_twelfth.name = "twelfth extrude feature"
+
+# Long End Screw 2
+        sketch10 = sketches.add(rootComp.yZConstructionPlane)
+        sketchCircles10 = sketch10.sketchCurves.sketchCircles
+        centerPoint10 = adsk.core.Point3D.create(centerX10, centerY10, centerZ10)
+        sketchCircles10.addByCenterRadius(centerPoint10, radius10)
+
+        # Get the profile defined by the fourth circle.
+        prof_tenth = sketch10.profiles.item(0)
+
+        # Extrude the profile to a distance of length10 cm.
+        distance = adsk.core.ValueInput.createByReal(length10)
+        extrude_tenth = extrudes.addSimple(prof_tenth, distance, adsk.fusion.FeatureOperations.JoinFeatureOperation)
+        body_tenth = extrude_tenth.bodies.item(0)
+        body_tenth.name = "Long End Screw 2"
+
+    except:
+        if ui:
+            ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
